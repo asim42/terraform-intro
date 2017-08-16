@@ -1,0 +1,31 @@
+#cloud-config
+
+write_files:
+  - content: |
+      <h1>Hi</h1>
+    path: /home/core/html/index.html
+    permissions: '0644'
+  - content: |
+      FROM nginx:1.13-alpine
+      COPY html/index.html /usr/share/nginx/html/index.html
+    path: /home/core/Dockerfile
+    permissions: '0644'
+  - content: |
+      #!/bin/sh
+      sudo docker build -t myapp /home/core/
+      sudo docker run -d -p 80:80 myapp
+    path: /home/core/bootstrap.sh
+    permissions: '0755'
+
+coreos:
+  units:
+   - name: bootstrap.service
+     command: start
+     enable: true
+     content: |
+      [Unit]
+      Description=Pull and run docker image
+      Requires=docker.service
+      After=docker.service
+      [Service]
+      ExecStart=/home/core/bootstrap.sh
